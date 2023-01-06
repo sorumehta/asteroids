@@ -111,16 +111,18 @@ public:
 
         // Rotate
         // To rotate the ship by angle A to left, the equations are:
-        //    P2_x = P1_x * cos(A) - P1_y * sin(A)
-        //    P2_y = P1_x * sin(A) + P1_y * cos(A)
+        //    P2_x = |P2|*cos(A1 + A2) where |P1| and |P2| are equal, A1 is original angle, A2 is rotated angle
+        // => P2_x = P1_x * cos(A2) - P1_y * sin(A2)
+        //    Similarly,
+        //    P2_y = P1_x * sin(A2) + P1_y * cos(A2)
         // Since these equations are just manipulating x and y to get new x and y,
         // we can also represent these equations using a matrix multiplication
         // [P2_x] = [cos(A)  -sin(A)] [P1_x]
         // [P2_y] = [sin(A)   cos(A)] [P1_y]
         for (int i = 0; i < verts; i++)
         {
-            vecTransformedCoordinates[i].first = vecModelCoordinates[i].first * cosf(r) - vecModelCoordinates[i].second * sinf(r);
-            vecTransformedCoordinates[i].second = vecModelCoordinates[i].first * sinf(r) + vecModelCoordinates[i].second * cosf(r);
+            vecTransformedCoordinates[i].first = vecModelCoordinates[i].first * std::cos(r) - vecModelCoordinates[i].second * std::sin(r);
+            vecTransformedCoordinates[i].second = vecModelCoordinates[i].first * std::sin(r) + vecModelCoordinates[i].second * std::cos(r);
         }
 
         // Scale
