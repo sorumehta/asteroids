@@ -45,6 +45,7 @@ class GameEngine {
 protected:
     int mWindowWidth;
     int mWindowHeight;
+    SDL_Event e;
 private:
     void initScreen();
     SDL_Window *gWindow;
@@ -52,9 +53,10 @@ private:
 public:
     GameEngine();
     
-    virtual bool onFrameUpdate(float fElapsedTime, SDL_Event *e) = 0;
-
+    virtual bool onFrameUpdate(float fElapsedTime) = 0;
     virtual bool onInit() = 0;
+    virtual void onKeyboardEvent(int keycode, float secPerFrame);
+    virtual void onMouseEvent(int posX, int posY, float secPerFrame);
 
     bool constructConsole(int nCharsX, int nCharsY, const char * title);
 
@@ -68,6 +70,6 @@ public:
     void startGameLoop();
 
     void close_sdl();
-    
+
     ~GameEngine();
 };

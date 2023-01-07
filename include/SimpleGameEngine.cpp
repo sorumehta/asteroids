@@ -143,17 +143,20 @@ void GameEngine::startGameLoop() {
         initScreen();
         //handle input
         SDL_Event e;
-        SDL_Event *userInput = nullptr;
-        if (SDL_PollEvent(&e) != 0) {
+        while (SDL_PollEvent(&e) != 0) {
             //User requests quit
             if (e.type == SDL_QUIT) {
                 quit = true;
-            } else {
-                userInput = &e;
+            } else if(e.type == SDL_KEYDOWN) {
+                onKeyboardEvent(e.key.keysym.sym, frameElapsedTime);
+            } else if(e.type == SDL_MOUSEBUTTONDOWN){
+                int x, y;
+                SDL_GetMouseState( &x, &y );
+                onMouseEvent(x, y, frameElapsedTime);
             }
 
         }
-        if(!onFrameUpdate(frameElapsedTime, userInput)){
+        if(!onFrameUpdate(frameElapsedTime)){
             quit = true;
         }
 
@@ -165,4 +168,12 @@ void GameEngine::startGameLoop() {
         }
 
     }
+}
+
+void GameEngine::onKeyboardEvent(int keycode, float secPerFrame) {
+    std::cout << "Key pressed with code" << keycode << std::endl;
+}
+
+void GameEngine::onMouseEvent(int posX, int posY, float secPerFrame) {
+    std::cout << "mouse button clicked" << std::endl;
 }
