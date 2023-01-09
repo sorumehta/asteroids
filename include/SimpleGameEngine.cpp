@@ -1,6 +1,11 @@
 #include "SimpleGameEngine.hpp"
 
+const int FONT_SIZE = 18;
+const int FONT_WIDTH = 10;
+const int FONT_HEIGHT = 18;
 
+SDL_Renderer *gRenderer = nullptr;
+TTF_Font *gFont = NULL;
 LTexture::LTexture() {
     mTexture = nullptr;
     mWidth = 0;
@@ -30,10 +35,38 @@ LTexture::~LTexture() {
     free();
 }
 
+bool LTexture::loadTextureFromText(const std::string &text, SDL_Color color) {
+    if(text.length() == 0){
+        // nothing to render
+        return true;
+    }
+    //free existing texture
+    free();
 
-GameEngine::GameEngine(): mWindowWidth(80), mWindowHeight(40), gWindow(nullptr), gRenderer(nullptr) {
+    SDL_Surface *textSurface = TTF_RenderUTF8_Solid_Wrapped(gFont, text.c_str(), color, 0);
+    if (textSurface == nullptr) {
+        std::cout << "Unable to render text surface! SDL_ttf Error: " << TTF_GetError() << std::endl;
+        return false;
+    }
+    mTexture = SDL_CreateTextureFromSurface(gRenderer, textSurface);
+    if (mTexture == nullptr) {
+        std::cout << "Unable to create texture from rendered text! SDL Error:" << SDL_GetError() << std::endl;
+        return false;
+    }
+    mWidth = textSurface->w;
+    mHeight = textSurface->h;
+    SDL_FreeSurface(textSurface);
+    return true;
+}
+
+
+GameEngine::GameEngine(): mWindowWidth(80), mWindowHeight(40), gWindow(nullptr){
     if (SDL_Init(SDL_INIT_VIDEO) < 0) {
         std::cout << "SDL initialization failed: " << SDL_GetError();
+    }
+    if (TTF_Init() == -1) {
+        std::cout << "SDL_ttf could not initialize! SDL_ttf Error:" << TTF_GetError();
+        return;
     }
 }
 
@@ -72,7 +105,11 @@ bool GameEngine::constructConsole(int windowWidth = 80, int windowHeight = 40, c
 }
 
 bool GameEngine::createResources() {
-
+    gFont = TTF_OpenFont("../res/Panoptica Regular.ttf", FONT_SIZE);
+    if (gFont == nullptr) {
+        std::cout << "Failed to load font! SDL_ttf Error: " << TTF_GetError();
+        return false;
+    }
     return true;
 }
 
@@ -176,4 +213,9 @@ void GameEngine::onKeyboardEvent(int keycode, float secPerFrame) {
 
 void GameEngine::onMouseEvent(int posX, int posY, float secPerFrame) {
     std::cout << "mouse button clicked" << std::endl;
+}
+
+bool GameEngine::drawString(int x, int y, std::string text) {
+    texture.loadTextureFromText(text, {0xFF, 0xFF, 0xFF});
+    texture.render(gRenderer, x, y);
 }

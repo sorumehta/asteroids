@@ -6,7 +6,10 @@
 
 class Asteroids : public GameEngine{
 private:
+    int score;
     const float mAcceleration;
+    const float bulletSpeed;
+    bool dead;
     struct SpaceObject{
         float x; // x pos
         float y; // y pos
@@ -23,10 +26,13 @@ private:
     std::vector<std::pair<float, float>> vecModelAsteroid;
 
 public:
-    Asteroids(): mAcceleration(30.0f){}
+    Asteroids(): score(0), mAcceleration(30.0f), bulletSpeed(180.0f), dead(false){}
 
     bool onInit() override{
-        vecAsteroids.push_back({20.0f, 20.0f, 8.0, -6.0f, (int)8, 0.0f});
+        vecAsteroids.push_back({20.0f, 20.0f, 8.0, -20.0f, (int)32, 0.0f});
+        vecAsteroids.push_back({420.0f, 120.0f, -5.0, 6.0f, (int)32, 0.0f});
+        vecAsteroids.push_back({120.0f, 0.0f, -25.0, 16.0f, (int)32, 0.0f});
+        vecAsteroids.push_back({0.0f, 200.0f, 25.0, -16.0f, (int)32, 0.0f});
         player.x = mWindowWidth / 2.0f;
         player.y = mWindowHeight / 2.0f;
         player.velX = 0.0f;
@@ -73,13 +79,14 @@ public:
                 break;
             case SDLK_UP: // a = v2 - v1 / t   =>   v2 = a*t + v1
                 player.velX += (std::sin(player.angle) * mAcceleration * secPerFrame);
-                player.velY += (-std::cos(player.angle) * 20.f * secPerFrame);
+                player.velY += (-std::cos(player.angle) * mAcceleration * secPerFrame);
                 break;
             case SDLK_SPACE:
-                SpaceObject bullet = {player.x, player.y, 50.0f * std::sin(player.angle), -50.0f * std::cos(player.angle), 0, 0};
+                SpaceObject bullet = {player.x, player.y, bulletSpeed * std::sin(player.angle), -bulletSpeed * std::cos(player.angle), 0, 0};
                 vecBullets.push_back(bullet);
         }
     }
+
 
     bool onFrameUpdate(float secPerFrame) override{
         // secPerFrame is the time it took for the previous frame in seconds. Why is it useful?
@@ -94,7 +101,13 @@ public:
 
         WrapCoordinates(player.x, player.y, player.x, player.y);
 
-//         update and draw asteroids
+        // check ship collision with asteroids
+        for(auto &a: vecAsteroids){
+            if(isPointInsideCircle(a.x, a.y, a.size, player.x, player.y)){
+                dead = true;
+            }
+        }
+        //  update and draw asteroids
         for(auto &a : vecAsteroids){
             a.x += (a.velX * secPerFrame);
             a.y += (a.velY * secPerFrame);
@@ -102,16 +115,40 @@ public:
             DrawWireFrameModel(vecModelAsteroid, a.x, a.y, a.angle, a.size);
         }
 
+        std::vector<SpaceObject> newAsteroids;
+
         // draw bullets
         for(auto &b : vecBullets){
             b.x += (b.velX * secPerFrame);
             b.y += (b.velY * secPerFrame);
-            WrapCoordinates(b.x, b.y, b.x, b.y);
+            b.angle -= 1.0f * secPerFrame;
+//            WrapCoordinates(b.x, b.y, b.x, b.y);
             drawPoint(b.x, b.y);
+
+            // check collision with asteroids
+
+            for (auto &a: vecAsteroids){
+                if(isPointInsideCircle(a.x, a.y, a.size, b.x, b.y)){
+                    // collision with asteroid
+                    b.x = -100;
+                    if(a.size > 8){
+                        float rand_angle = static_cast <float> (rand()) / (static_cast <float> (RAND_MAX/6.28318f));
+                        newAsteroids.push_back({a.x, a.y, a.velX * std::sin(rand_angle), a.velY * std::cos(rand_angle), a.size/2, 0});
+                        rand_angle = static_cast <float> (rand()) / (static_cast <float> (RAND_MAX/6.28318f));
+                        newAsteroids.push_back({a.x, a.y, a.velX * std::sin(rand_angle), a.velY * std::cos(rand_angle), a.size/2, 0});
+                    }
+                    a.x = -100;
+                    score += 20;
+                }
+            }
+        }
+
+        for(auto a: newAsteroids){
+            vecAsteroids.push_back(a);
         }
 
         // remove bullets which are off the screen
-        if(vecBullets.size() > 0){
+        if(!vecBullets.empty()){
             auto it = std::remove_if(vecBullets.begin(), vecBullets.end(),
                                      [&](SpaceObject o){
                 return (o.x <1 || o.y < 1 || o.x >= mWindowWidth || o.y >= mWindowHeight);});
@@ -120,10 +157,26 @@ public:
             }
         }
 
+        // remove asteroids which are off the screen
+        if(!vecAsteroids.empty()){
+            auto it = std::remove_if(vecAsteroids.begin(), vecAsteroids.end(),
+                                     [&](SpaceObject o){ return (o.x < 0 ); });
+            if(it != vecAsteroids.end()){
+                vecAsteroids.erase(it);
+            }
+        }
         // draw ship
         DrawWireFrameModel(vecModelShip, player.x, player.y, player.angle);
-
+        drawString(2, 2, "Score: " + std::to_string(score));
+        if(dead){
+            return false;
+        }
         return true;
+    }
+
+    bool isPointInsideCircle(float cx, float cy, float radius, float x, float y)
+    {
+        return sqrt((x-cx)*(x-cx) + (y-cy)*(y-cy)) < radius;
     }
 
     // Draws a model on screen with the given rotation, translation and scaling
