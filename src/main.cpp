@@ -17,6 +17,7 @@ private:
         float velY; // y velocity
         int size;
         float angle;
+        int health;
     };
     std::vector<SpaceObject> vecAsteroids;
     std::vector<SpaceObject> vecBullets;
@@ -29,10 +30,11 @@ public:
     Asteroids(): score(0), mAcceleration(30.0f), bulletSpeed(180.0f), dead(false){}
 
     bool onInit() override{
-        vecAsteroids.push_back({20.0f, 20.0f, 8.0, -20.0f, (int)32, 0.0f});
-        vecAsteroids.push_back({420.0f, 120.0f, -5.0, 6.0f, (int)32, 0.0f});
-        vecAsteroids.push_back({120.0f, 0.0f, -25.0, 16.0f, (int)32, 0.0f});
-        vecAsteroids.push_back({0.0f, 200.0f, 25.0, -16.0f, (int)32, 0.0f});
+        vecAsteroids.push_back({20.0f, 20.0f, 8.0, -20.0f, (int)32, 0.0f, 100});
+        vecAsteroids.push_back({420.0f, 120.0f, -5.0, 6.0f, (int)32, 0.0f, 100});
+        vecAsteroids.push_back({120.0f, 0.0f, -25.0, 16.0f, (int)32, 0.0f, 100});
+        vecAsteroids.push_back({0.0f, 200.0f, 25.0, -16.0f, (int)32, 0.0f, 100});
+        vecAsteroids.push_back({300.0f, 50.0f, -30.0, -10.0f, (int)32, 0.0f, 100});
         player.x = mWindowWidth / 2.0f;
         player.y = mWindowHeight / 2.0f;
         player.velX = 0.0f;
@@ -131,14 +133,17 @@ public:
                 if(isPointInsideCircle(a.x, a.y, a.size, b.x, b.y)){
                     // collision with asteroid
                     b.x = -100;
-                    if(a.size > 8){
-                        float rand_angle = static_cast <float> (rand()) / (static_cast <float> (RAND_MAX/6.28318f));
-                        newAsteroids.push_back({a.x, a.y, a.velX * std::sin(rand_angle), a.velY * std::cos(rand_angle), a.size/2, 0});
-                        rand_angle = static_cast <float> (rand()) / (static_cast <float> (RAND_MAX/6.28318f));
-                        newAsteroids.push_back({a.x, a.y, a.velX * std::sin(rand_angle), a.velY * std::cos(rand_angle), a.size/2, 0});
+                    a.health -= 25;
+                    if(a.health <= 0){
+                        score += 20;
+                        if(a.size > 8){
+                            float rand_angle = static_cast <float> (rand()) / (static_cast <float> (RAND_MAX/6.28318f));
+                            newAsteroids.push_back({a.x, a.y, a.velX * std::sin(rand_angle), a.velY * std::cos(rand_angle), a.size/2, 0, 100});
+                            rand_angle = static_cast <float> (rand()) / (static_cast <float> (RAND_MAX/6.28318f));
+                            newAsteroids.push_back({a.x, a.y, a.velX * std::sin(rand_angle), a.velY * std::cos(rand_angle), a.size/2, 0, 100});
+                        }
+                        a.x = -100;
                     }
-                    a.x = -100;
-                    score += 20;
                 }
             }
         }
