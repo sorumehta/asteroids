@@ -30,15 +30,17 @@ public:
     Asteroids(): score(0), mAcceleration(30.0f), bulletSpeed(180.0f), dead(false){}
 
     bool onInit() override{
-        vecAsteroids.push_back({20.0f, 20.0f, 8.0, -20.0f, (int)32, 0.0f, 100});
-        vecAsteroids.push_back({420.0f, 120.0f, -5.0, 6.0f, (int)32, 0.0f, 100});
-        vecAsteroids.push_back({120.0f, 0.0f, -25.0, 16.0f, (int)32, 0.0f, 100});
-        vecAsteroids.push_back({0.0f, 200.0f, 25.0, -16.0f, (int)32, 0.0f, 100});
-        vecAsteroids.push_back({300.0f, 50.0f, -30.0, -10.0f, (int)32, 0.0f, 100});
+        int iSize = 32;
+        vecAsteroids.push_back({20.0f, 20.0f, 8.0, -20.0f, iSize, 0.0f, iSize * 10});
+        vecAsteroids.push_back({420.0f, 120.0f, -5.0, 6.0f, iSize, 0.0f, iSize * 10});
+        vecAsteroids.push_back({120.0f, 0.0f, -25.0, 16.0f, iSize, 0.0f, iSize * 10});
+        vecAsteroids.push_back({0.0f, 200.0f, 25.0, -16.0f, iSize, 0.0f, iSize * 10});
+        vecAsteroids.push_back({300.0f, 50.0f, -30.0, -10.0f, iSize, 0.0f, iSize * 10});
+        vecAsteroids.push_back({500.0f, 300.0f, 35.0, 15.0f, iSize, 0.0f, iSize * 10});
         player.x = mWindowWidth / 2.0f;
         player.y = mWindowHeight / 2.0f;
-        player.velX = 0.0f;
-        player.velY = 0.0f;
+        player.velX = 4.0f;
+        player.velY = -3.0f;
         player.angle = 0.0f;
         // ship initial coordinates in game space (where 0,0 is center of the screen)
         // we don't change them, they act as model coordinates
@@ -68,16 +70,19 @@ public:
     bool drawPoint(int x, int y, Color color = {0xFF, 0xFF, 0xFF}) override{
         float fx, fy;
         WrapCoordinates(x, y, fx, fy);
-        return GameEngine::drawPoint(static_cast<int>(std::round(fx)), static_cast<int>(std::round(fy)));
+        return GameEngine::drawPoint(static_cast<int>(std::round(fx)), static_cast<int>(std::round(fy)), color);
     }
 
     void onKeyboardEvent(int keycode, float secPerFrame) override {
+        if(dead){
+            return;
+        }
         switch (keycode) {
             case SDLK_RIGHT:
-                player.angle -= (5.0f * secPerFrame);
+                player.angle += (5.0f * secPerFrame);
                 break;
             case SDLK_LEFT:
-                player.angle += (5.0f * secPerFrame);
+                player.angle -= (5.0f * secPerFrame);
                 break;
             case SDLK_UP: // a = v2 - v1 / t   =>   v2 = a*t + v1
                 player.velX += (std::sin(player.angle) * mAcceleration * secPerFrame);
@@ -133,14 +138,14 @@ public:
                 if(isPointInsideCircle(a.x, a.y, a.size, b.x, b.y)){
                     // collision with asteroid
                     b.x = -100;
-                    a.health -= 25;
+                    a.health -= 100;
                     if(a.health <= 0){
                         score += 20;
                         if(a.size > 8){
                             float rand_angle = static_cast <float> (rand()) / (static_cast <float> (RAND_MAX/6.28318f));
-                            newAsteroids.push_back({a.x, a.y, a.velX * std::sin(rand_angle), a.velY * std::cos(rand_angle), a.size/2, 0, 100});
+                            newAsteroids.push_back({a.x, a.y, a.velX * std::sin(rand_angle), a.velY * std::cos(rand_angle), a.size/2, 0, (a.size/2)*10});
                             rand_angle = static_cast <float> (rand()) / (static_cast <float> (RAND_MAX/6.28318f));
-                            newAsteroids.push_back({a.x, a.y, a.velX * std::sin(rand_angle), a.velY * std::cos(rand_angle), a.size/2, 0, 100});
+                            newAsteroids.push_back({a.x, a.y, a.velX * std::sin(rand_angle), a.velY * std::cos(rand_angle), a.size/2, 0, (a.size/2)*10});
                         }
                         a.x = -100;
                     }
@@ -174,7 +179,7 @@ public:
         DrawWireFrameModel(vecModelShip, player.x, player.y, player.angle);
         drawString(2, 2, "Score: " + std::to_string(score));
         if(dead){
-            return false;
+            drawString(mWindowWidth/2, mWindowHeight/2, "Game Over Kiddo!");
         }
         return true;
     }

@@ -130,7 +130,7 @@ bool GameEngine::drawLine(int x1, int y1, int x2, int y2, Color color ) {
 }
 
 bool GameEngine::drawPoint(int x, int y, Color color) {
-    SDL_SetRenderDrawColor(gRenderer, 0xFF, 0xFF, 0xFF, SDL_ALPHA_OPAQUE);
+    SDL_SetRenderDrawColor(gRenderer, color.r, color.g, color.b, SDL_ALPHA_OPAQUE);
     if(SDL_RenderDrawPoint( gRenderer, x, y ) != 0){
         return false;
     }
