@@ -38,9 +38,9 @@ typedef struct ConsoleInfo{
 } ConsoleInfo;
 
 struct Color {
-    int r;
-    int g;
-    int b;
+    unsigned char r;
+    unsigned char g;
+    unsigned char b;
 };
 
 class GameEngine {

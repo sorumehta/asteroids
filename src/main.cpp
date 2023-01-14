@@ -8,7 +8,6 @@ int CURRENT_ID = 0;
 
 class Asteroids : public GameEngine{
 private:
-    int id;
     int score;
     const float mAcceleration;
     const float bulletSpeed;
@@ -22,6 +21,7 @@ private:
         int size;
         float angle;
         int health;
+        Color colour;
         float mass = size*2;
     };
     std::vector<SpaceObject> vecAsteroids;
@@ -36,12 +36,13 @@ public:
 
     bool onInit() override{
         int iSize = 32;
-        vecAsteroids.push_back({CURRENT_ID++, 20.0f, 20.0f, 28.0, -40.0f, iSize, 0.0f, iSize * 10});
-        vecAsteroids.push_back({CURRENT_ID++,420.0f, 120.0f, -25.0, 16.0f, iSize, 0.0f, iSize * 10});
-        vecAsteroids.push_back({CURRENT_ID++,120.0f, 0.0f, -55.0, 36.0f, iSize, 0.0f, iSize * 10});
-        vecAsteroids.push_back({CURRENT_ID++,0.0f, 200.0f, 55.0, -36.0f, iSize, 0.0f, iSize * 10});
-        vecAsteroids.push_back({CURRENT_ID++,300.0f, 50.0f, -60.0, -20.0f, iSize, 0.0f, iSize * 10});
-        vecAsteroids.push_back({CURRENT_ID++,500.0f, 300.0f, 65.0, 35.0f, iSize, 0.0f, iSize * 10});
+
+        vecAsteroids.push_back({CURRENT_ID++, 20.0f, 20.0f, 28.0, -30.0f, iSize, 0.0f, iSize * 10, {0xDA, 0xC2, 0x2B}}); //#DAC22B
+        vecAsteroids.push_back({CURRENT_ID++,420.0f, 120.0f, -25.0, 16.0f, iSize, 0.0f, iSize * 10, {0x2B, 0xD2, 0xDA}}); //#2BD2DA
+        vecAsteroids.push_back({CURRENT_ID++,120.0f, 0.0f, -25.0, 36.0f, iSize, 0.0f, iSize * 10, {0x9A, 0xDA, 0x2B}}); //#9ADA2B
+        vecAsteroids.push_back({CURRENT_ID++,0.0f, 200.0f, 25.0, -16.0f, iSize, 0.0f, iSize * 10, {0xDA, 0x48, 0x2B}}); //#DA482B
+        vecAsteroids.push_back({CURRENT_ID++,300.0f, 50.0f, -30.0, -20.0f, iSize, 0.0f, iSize * 10, {0xB4, 0x7A, 0xE1}}); //#B47AE1
+        vecAsteroids.push_back({CURRENT_ID++,500.0f, 300.0f, 35.0, 35.0f, iSize, 0.0f, iSize * 10, {0x95, 0x73, 0x72}}); //#957372
         player.x = mWindowWidth / 2.0f;
         player.y = mWindowHeight / 2.0f;
         player.velX = 4.0f;
@@ -57,7 +58,7 @@ public:
         int verts = 20; // asteroid is a 20 vertices polygon
         for(int i = 0; i < verts; i++) {
             float radius = 1.0f;
-            float seg_angle = 6.28318f * (float(i)) / (float(verts));
+            float seg_angle = 6.28318f * (float(i)) / (float(verts)); // portion of 2*PI
             vecModelAsteroid.emplace_back(radius * std::sin(seg_angle), radius*std::cos(seg_angle));
         }
 
@@ -194,7 +195,7 @@ public:
             a.x += (a.velX * secPerFrame);
             a.y += (a.velY * secPerFrame);
             WrapCoordinates(a.x, a.y, a.x, a.y);
-            DrawWireFrameModel(vecModelAsteroid, a.x, a.y, a.angle, a.size);
+            DrawWireFrameModel(vecModelAsteroid, a.x, a.y, a.angle, a.size, true, a.colour);
         }
 
         std::vector<SpaceObject> newAsteroids;
@@ -218,9 +219,9 @@ public:
                         score += 20;
                         if(a.size > 16){
                             float rand_angle = static_cast <float> (rand()) / (static_cast <float> (RAND_MAX/6.28318f));
-                            newAsteroids.push_back({CURRENT_ID++,a.x+10, a.y+10, a.velX * std::sin(rand_angle), a.velY * std::cos(rand_angle), a.size/2, 0, (a.size/2)*10});
+                            newAsteroids.push_back({CURRENT_ID++,a.x+10, a.y+10, a.velX * std::sin(rand_angle), a.velY * std::cos(rand_angle), a.size/2, 0, (a.size/2)*10, a.colour});
                             rand_angle = static_cast <float> (rand()) / (static_cast <float> (RAND_MAX/6.28318f));
-                            newAsteroids.push_back({CURRENT_ID++,a.x-10, a.y-10, a.velX * std::sin(rand_angle), a.velY * std::cos(rand_angle), a.size/2, 0, (a.size/2)*10});
+                            newAsteroids.push_back({CURRENT_ID++,a.x-10, a.y-10, a.velX * std::sin(rand_angle), a.velY * std::cos(rand_angle), a.size/2, 0, (a.size/2)*10, a.colour});
                         }
                         a.x = -100;
                     }
@@ -261,8 +262,67 @@ public:
 
     bool isPointInsideCircle(float cx, float cy, float radius, float x, float y)
     {
-        return sqrt((x-cx)*(x-cx) + (y-cy)*(y-cy)) < radius;
+        return (x-cx)*(x-cx) + (y-cy)*(y-cy) < radius * radius;
     }
+
+    void DrawWireFrameModel(const std::vector<std::pair<float, float>> &vecModelCoordinates, float x, float y, float r = 0.0f, float s = 1.0f, bool fillCircle = false, Color color = {0xFF, 0xFF, 0xFF})
+    {
+        // Create translated model vector of coordinate pairs, we don't want to change the original one
+        std::vector<std::pair<float, float>> vecTransformedCoordinates;
+        unsigned int verts = vecModelCoordinates.size();
+        vecTransformedCoordinates.resize(verts);
+
+        // Rotate
+
+        for (int i = 0; i < verts; i++)
+        {
+            vecTransformedCoordinates[i].first = vecModelCoordinates[i].first * std::cos(r) - vecModelCoordinates[i].second * std::sin(r);
+            vecTransformedCoordinates[i].second = vecModelCoordinates[i].first * std::sin(r) + vecModelCoordinates[i].second * std::cos(r);
+        }
+
+        // Scale
+        for (int i = 0; i < verts; i++)
+        {
+            vecTransformedCoordinates[i].first = vecTransformedCoordinates[i].first * s;
+            vecTransformedCoordinates[i].second = vecTransformedCoordinates[i].second * s;
+        }
+
+        // Translate
+        for (int i = 0; i < verts; i++)
+        {
+            vecTransformedCoordinates[i].first = vecTransformedCoordinates[i].first + x;
+            vecTransformedCoordinates[i].second = vecTransformedCoordinates[i].second + y;
+        }
+
+        // Draw Closed Polygon
+        for (int i = 0; i < verts + 1; i++)
+        {
+            int j = (i + 1);
+            drawLine(static_cast<int>(std::round(vecTransformedCoordinates[i % verts].first)), static_cast<int>(std::round(vecTransformedCoordinates[i % verts].second)),
+                     static_cast<int>(std::round(vecTransformedCoordinates[j % verts].first)), static_cast<int>(std::round(vecTransformedCoordinates[j % verts].second)), color);
+        }
+
+        if(fillCircle){
+            fillCircleWithColor({static_cast<int>(x), static_cast<int>(y)}, s,{color.r, color.g, color.b});
+        }
+    }
+    void fillCircleWithColor(SDL_Point center, int radius, SDL_Color color)
+    {
+        for (int w = 0; w < radius * 2; w++)
+        {
+            for (int h = 0; h < radius * 2; h++)
+            {
+                int dx = radius - w; // horizontal offset
+                int dy = radius - h; // vertical offset
+                if ((dx*dx + dy*dy) <= (radius * radius))
+                {
+                    drawPoint( center.x + dx, center.y + dy, {color.r, color.b, color.g});
+                }
+            }
+        }
+    }
+
+
 };
 
 int main(int argc, char *args[]) {
