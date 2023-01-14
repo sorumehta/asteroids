@@ -1,4 +1,5 @@
 #include "SimpleGameEngine.hpp"
+#include <cmath>
 
 const int FONT_SIZE = 18;
 const int FONT_WIDTH = 10;
@@ -186,10 +187,10 @@ void GameEngine::startGameLoop() {
                 quit = true;
             } else if(e.type == SDL_KEYDOWN) {
                 onKeyboardEvent(e.key.keysym.sym, frameElapsedTime);
-            } else if(e.type == SDL_MOUSEBUTTONDOWN){
+            } else if(e.type == SDL_MOUSEBUTTONDOWN || e.type == SDL_MOUSEBUTTONUP || e.type == SDL_MOUSEMOTION){
                 int x, y;
                 SDL_GetMouseState( &x, &y );
-                onMouseEvent(x, y, frameElapsedTime);
+                onMouseEvent(x, y, frameElapsedTime, e.type, e.button.button);
             }
 
         }
@@ -208,14 +209,63 @@ void GameEngine::startGameLoop() {
 }
 
 void GameEngine::onKeyboardEvent(int keycode, float secPerFrame) {
-    std::cout << "Key pressed with code" << keycode << std::endl;
 }
 
-void GameEngine::onMouseEvent(int posX, int posY, float secPerFrame) {
-    std::cout << "mouse button clicked" << std::endl;
-}
+void
+GameEngine::onMouseEvent(int posX, int posY, float secPerFrame, unsigned int mouseState, unsigned char button) {}
 
-bool GameEngine::drawString(int x, int y, std::string text) {
+bool GameEngine::drawString(int x, int y, const std::string& text) {
     texture.loadTextureFromText(text, {0xFF, 0xFF, 0xFF});
     texture.render(gRenderer, x, y);
+    return true;
+}
+
+// Draws a model on screen with the given rotation(r), translation(x, y) and scaling(s)
+void GameEngine::DrawWireFrameModel(const std::vector<std::pair<float, float>> &vecModelCoordinates, float x, float y, float r, float s, Color color)
+{
+    // std::pair.first = x coordinate
+    // std::pair.second = y coordinate
+
+    // Create translated model vector of coordinate pairs, we don't want to change the original one
+    std::vector<std::pair<float, float>> vecTransformedCoordinates;
+    unsigned int verts = vecModelCoordinates.size();
+    vecTransformedCoordinates.resize(verts);
+
+    // Rotate
+    // To rotate the ship by angle A to left, the equations are:
+    //    P2_x = |P2|*cos(A1 + A2) where |P1| and |P2| are equal, A1 is original angle, A2 is rotated angle
+    // => P2_x = P1_x * cos(A2) - P1_y * sin(A2)
+    //    Similarly,
+    //    P2_y = P1_x * sin(A2) + P1_y * cos(A2)
+    // Since these equations are just manipulating x and y to get new x and y,
+    // we can also represent these equations using a matrix multiplication
+    // [P2_x] = [cos(A)  -sin(A)] [P1_x]
+    // [P2_y] = [sin(A)   cos(A)] [P1_y]
+    for (int i = 0; i < verts; i++)
+    {
+        vecTransformedCoordinates[i].first = vecModelCoordinates[i].first * std::cos(r) - vecModelCoordinates[i].second * std::sin(r);
+        vecTransformedCoordinates[i].second = vecModelCoordinates[i].first * std::sin(r) + vecModelCoordinates[i].second * std::cos(r);
+    }
+
+    // Scale
+    for (int i = 0; i < verts; i++)
+    {
+        vecTransformedCoordinates[i].first = vecTransformedCoordinates[i].first * s;
+        vecTransformedCoordinates[i].second = vecTransformedCoordinates[i].second * s;
+    }
+
+    // Translate
+    for (int i = 0; i < verts; i++)
+    {
+        vecTransformedCoordinates[i].first = vecTransformedCoordinates[i].first + x;
+        vecTransformedCoordinates[i].second = vecTransformedCoordinates[i].second + y;
+    }
+
+    // Draw Closed Polygon
+    for (int i = 0; i < verts + 1; i++)
+    {
+        int j = (i + 1);
+        drawLine(static_cast<int>(std::round(vecTransformedCoordinates[i % verts].first)), static_cast<int>(std::round(vecTransformedCoordinates[i % verts].second)),
+                 static_cast<int>(std::round(vecTransformedCoordinates[j % verts].first)), static_cast<int>(std::round(vecTransformedCoordinates[j % verts].second)), color);
+    }
 }

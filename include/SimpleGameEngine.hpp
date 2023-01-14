@@ -54,20 +54,23 @@ private:
     LTexture texture;
 public:
     GameEngine();
-    
+
     virtual bool onFrameUpdate(float fElapsedTime) = 0;
 
     virtual bool onInit() = 0;
 
     virtual void onKeyboardEvent(int keycode, float secPerFrame);
 
-    virtual void onMouseEvent(int posX, int posY, float secPerFrame);
+    virtual void
+    onMouseEvent(int posX, int posY, float secPerFrame, unsigned int mouseState, unsigned char button);
 
     virtual bool drawPoint(int x, int y, Color color = {0xFF, 0xFF, 0xFF});
 
     bool drawLine(int x1, int y1, int x2, int y2, Color color = {0xFF, 0xFF, 0xFF});
 
-    bool drawString(int x, int y, std::string text);
+    bool drawString(int x, int y, const std::string& text);
+
+    void DrawWireFrameModel(const std::vector<std::pair<float, float>> &vecModelCoordinates, float x, float y, float r = 0.0f, float s = 1.0f, Color color = {0xFF, 0xFF, 0xFF});
 
     bool constructConsole(int nCharsX, int nCharsY, const char * title);
 
