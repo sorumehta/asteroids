@@ -215,6 +215,7 @@ void
 GameEngine::onMouseEvent(int posX, int posY, float secPerFrame, unsigned int mouseState, unsigned char button) {}
 
 bool GameEngine::drawString(int x, int y, const std::string& text) {
+    LTexture texture;
     texture.loadTextureFromText(text, {0xFF, 0xFF, 0xFF});
     texture.render(gRenderer, x, y);
     return true;

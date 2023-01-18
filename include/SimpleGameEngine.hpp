@@ -51,7 +51,6 @@ protected:
 private:
     void initScreen();
     SDL_Window *gWindow = nullptr;
-    LTexture texture;
 public:
     GameEngine();
 
