@@ -253,9 +253,13 @@ public:
         }
         // draw ship
         DrawWireFrameModel(vecModelShip, player.x, player.y, player.angle);
-        drawString(2, 2, "Score: " + std::to_string(score));
+
+        LTexture texture;
+        texture.loadTextureFromText("Score: " + std::to_string(score));
+        texture.render(2,2);
         if(dead){
-            drawString(mWindowWidth/2, mWindowHeight/2, "Game Over Kiddo!");
+            texture.loadTextureFromText("Game Over Kiddo!");
+            texture.render(mWindowWidth/2, mWindowHeight/2);
         }
         return true;
     }

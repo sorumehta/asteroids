@@ -17,9 +17,9 @@ int LTexture::getHeight() const { return mHeight; }
 
 int LTexture::getWidth() const { return mWidth; }
 
-void LTexture::render(SDL_Renderer *renderer, int x, int y) {
+void LTexture::render(int x, int y) {
     SDL_Rect rect = {x, y, mWidth, mHeight};
-    SDL_RenderCopy(renderer, mTexture, NULL, &rect);
+    SDL_RenderCopy(gRenderer, mTexture, NULL, &rect);
 }
 
 void LTexture::free() {
@@ -208,18 +208,10 @@ void GameEngine::startGameLoop() {
     }
 }
 
-void GameEngine::onKeyboardEvent(int keycode, float secPerFrame) {
-}
+void GameEngine::onKeyboardEvent(int keycode, float secPerFrame) {}
 
 void
 GameEngine::onMouseEvent(int posX, int posY, float secPerFrame, unsigned int mouseState, unsigned char button) {}
-
-bool GameEngine::drawString(int x, int y, const std::string& text) {
-    LTexture texture;
-    texture.loadTextureFromText(text, {0xFF, 0xFF, 0xFF});
-    texture.render(gRenderer, x, y);
-    return true;
-}
 
 // Draws a model on screen with the given rotation(r), translation(x, y) and scaling(s)
 void GameEngine::DrawWireFrameModel(const std::vector<std::pair<float, float>> &vecModelCoordinates, float x, float y, float r, float s, Color color)
